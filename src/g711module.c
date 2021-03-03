@@ -9,17 +9,17 @@
 static PyObject*
 g711_py_load(PyObject* self, PyObject* args)
 {
-	const char* path = {0};
-	PyObject* path_obj = {0};
+    const char* path = {0};
+    PyObject* path_obj = {0};
 
-	if (!PyArg_ParseTuple(args, "O&", PyUnicode_FSConverter, &path_obj)) return NULL;
+    if (!PyArg_ParseTuple(args, "O&", PyUnicode_FSConverter, &path_obj)) return NULL;
 
-	if (path_obj == Py_None) {
-		PyErr_SetString(PyExc_ValueError, "The function accepts only non-empty string or path-like objects.");
-		return NULL;
-	}
+    if (path_obj == Py_None) {
+        PyErr_SetString(PyExc_ValueError, "The function accepts only non-empty string or path-like objects.");
+        return NULL;
+    }
 
-	path = PyBytes_AsString(path_obj);
+    path = PyBytes_AsString(path_obj);
 
     unsigned long samples_num = {0};
     float* audio_res = g711_alaw_load(path, &samples_num);

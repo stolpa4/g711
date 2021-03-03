@@ -18,7 +18,7 @@ static inline float* decode_bts_alaw(const char bts[], unsigned long bts_num);
 float* g711_alaw_load(const char file_path[], unsigned long* samples_num)
 {
     /* 1 byte == 1 sample */
-	char* audio_bts = read_bts(file_path, samples_num);
+    char* audio_bts = read_bts(file_path, samples_num);
 
     if (!audio_bts) return NULL;
 

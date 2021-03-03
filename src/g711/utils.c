@@ -27,83 +27,83 @@ short g711_float_to_s16(float sample)
 
 bool g711_validate_path(const char file_path[])
 {
-	assert(file_path);
-	return strlen(file_path);
+    assert(file_path);
+    return strlen(file_path);
 }
 
 
 FILE* g711_open_file_for_read(const char file_path[])
 {
-	assert(file_path);
-	return fopen(file_path, "rb");
+    assert(file_path);
+    return fopen(file_path, "rb");
 }
 
 
 unsigned long g711_get_file_bts_num(FILE* file)
 {
-	assert(file);
+    assert(file);
 
-	/* Flush the internal buffer to obtain a true position */
-	fflush(file);
+    /* Flush the internal buffer to obtain a true position */
+    fflush(file);
 
-	/* Remember the position to return to it after seeking */
-	long int old_pos = ftell(file);
-	if (old_pos < 0L) return 0UL;
+    /* Remember the position to return to it after seeking */
+    long int old_pos = ftell(file);
+    if (old_pos < 0L) return 0UL;
 
-	/* Get the number of bytes in the file */
-	int err = fseek(file, 0L, SEEK_END);
-	if (err) return 0UL;
+    /* Get the number of bytes in the file */
+    int err = fseek(file, 0L, SEEK_END);
+    if (err) return 0UL;
 
 
-	long int size = ftell(file);
-	unsigned long result = size > 0L ? (unsigned long)size : 0UL;
+    long int size = ftell(file);
+    unsigned long result = size > 0L ? (unsigned long)size : 0UL;
 
-	/* Returning to the initial position */
-	fseek(file, old_pos, SEEK_SET);
+    /* Returning to the initial position */
+    fseek(file, old_pos, SEEK_SET);
 
-	return result;
+    return result;
 }
 
 
 char* g711_read_file(FILE* file, unsigned long bts_num)
 {
-	assert(file);
+    assert(file);
 
-	char* buffer = malloc(bts_num);
-	if (!buffer) return NULL;
+    char* buffer = malloc(bts_num);
+    if (!buffer) return NULL;
 
-	unsigned long bts_read = fread(buffer, 1, bts_num, file);
+    unsigned long bts_read = fread(buffer, 1, bts_num, file);
 
-	if (bts_read != bts_num) {
-		free(buffer);
-		return NULL;
-	}
+    if (bts_read != bts_num) {
+        free(buffer);
+        return NULL;
+    }
 
-	return buffer;
+    return buffer;
 }
 
 
 FILE* g711_open_file_for_write(const char file_path[])
 {
-	assert(file_path);
-	return fopen(file_path, "wb");	
+    assert(file_path);
+    return fopen(file_path, "wb");  
 }
 
 
 bool g711_write_file(FILE* file, const char* bts, unsigned long bts_num)
 {
-	assert(file);
-	assert(bts);
-	assert(bts_num > 0);
+    assert(file);
+    assert(bts);
+    assert(bts_num > 0);
 
-	unsigned long bts_written = fwrite(bts, 1, bts_num, file);
+    unsigned long bts_written = fwrite(bts, 1, bts_num, file);
 
-	return bts_written == bts_num;
+    return bts_written == bts_num;
 }
 
 
 void g711_close_file(FILE* file)
 {
-	assert(file);
-	fclose(file);
+    assert(file);
+    fclose(file);
 }
