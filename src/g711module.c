@@ -1,5 +1,7 @@
 #define PY_SSIZE_T_CLEAN
-#include "Python.h"
+#include <Python.h>
+#include <numpy/arrayobject.h>
+#include <numpy/ndarraytypes.h>
 
 #include <stddef.h>
 
@@ -26,11 +28,11 @@ g711_py_load(PyObject* self, PyObject* args)
 
     if(!audio_res) return NULL;
 
-    PyObject* res = Py_BuildValue("y#", (char*)audio_res, samples_num * sizeof(float));
-
-    free(audio_res);
-
-    return res;
+    npy_intp dims = (npy_intp) samples_num;
+    PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, audio_res);
+    PyArrayObject* res = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, audio_res);
+    PyArray_ENABLEFLAGS(res, NPY_OWNDATA);
+    return (PyObject *)res;
 }
 
 
@@ -50,5 +52,6 @@ static struct PyModuleDef g711module = {
 
 
 PyMODINIT_FUNC PyInit_g711(void) {
+    import_array();
     return PyModule_Create(&g711module);
 }
