@@ -8,10 +8,44 @@
 #include "g711module_loader.h"
 
 
+typedef float* (*LoadFunction)(const char*, unsigned long*);
+
+
+static inline PyObject* g711_py_load(PyObject* self, PyObject* args, LoadFunction load_fn);
+static inline const char* parse_path(PyObject* args);
+static inline PyArrayObject* c_to_numpy_arr(float* arr, unsigned long arr_len);
+
+
 static PyObject*
-g711_py_load(PyObject* self, PyObject* args)
+g711_py_alaw_load(PyObject* self, PyObject* args)
 {
-    const char* path = {0};
+    return g711_py_load(self, args, g711_alaw_load);
+}
+
+
+static PyObject*
+g711_py_ulaw_load(PyObject* self, PyObject* args)
+{
+    return g711_py_load(self, args, g711_ulaw_load);
+}
+
+
+PyObject*
+g711_py_load(PyObject* self, PyObject* args, LoadFunction load_fn)
+{
+    const char* path = parse_path(args);
+    if (!path) return path;
+
+    unsigned long samples_num = {0};
+    float* audio_res = load_fn(path, &samples_num);
+    if(!audio_res) return NULL;
+
+    return c_to_numpy_arr(audio_res, samples_num);
+}
+
+
+const char* parse_path(PyObject* args)
+{
     PyObject* path_obj = {0};
 
     if (!PyArg_ParseTuple(args, "O&", PyUnicode_FSConverter, &path_obj)) return NULL;
@@ -21,23 +55,23 @@ g711_py_load(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    path = PyBytes_AsString(path_obj);
+    return PyBytes_AsString(path_obj);    
+}
 
-    unsigned long samples_num = {0};
-    float* audio_res = g711_alaw_load(path, &samples_num);
 
-    if(!audio_res) return NULL;
-
-    npy_intp dims = (npy_intp) samples_num;
-    PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, audio_res);
-    PyArrayObject* res = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, audio_res);
+PyArrayObject* c_to_numpy_arr(float* arr, unsigned long arr_len)
+{
+    npy_intp dims = (npy_intp) arr_len;    
+    PyArrayObject* res = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, arr);
     PyArray_ENABLEFLAGS(res, NPY_OWNDATA);
-    return (PyObject *)res;
+    
+    return res;    
 }
 
 
 static PyMethodDef g711Methods[] = {
-    {"load", g711_py_load, METH_VARARGS, "Load and decode the specified A-Law encoded audio file."},
+    {"alaw_load", g711_py_alaw_load, METH_VARARGS, "Load and decode the specified A-Law encoded audio file."},
+    {"ulaw_load", g711_py_ulaw_load, METH_VARARGS, "Load and decode the specified u-Law encoded audio file."},
     {NULL, NULL, 0, NULL}
 };
 

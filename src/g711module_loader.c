@@ -11,18 +11,34 @@
 #include "g711/utils.h"
 
 
+typedef float* (*DecodeFunction)(unsigned long, const char*, float*);
+
+
+static inline float* load(const char file_path[], unsigned long* samples_num, DecodeFunction decoder);
 static inline char* read_bts(const char file_path[], unsigned long* bts_num);
-static inline float* decode_bts_alaw(const char bts[], unsigned long bts_num);
+static inline float* decode_bts(const char bts[], unsigned long bts_num, DecodeFunction decoder);
 
 
 float* g711_alaw_load(const char file_path[], unsigned long* samples_num)
+{
+    return load(file_path, samples_num, g711_alaw_decode);
+}
+
+
+float* g711_ulaw_load(const char file_path[], unsigned long* samples_num)
+{
+    return load(file_path, samples_num, g711_ulaw_decode);
+}
+
+
+float* load(const char file_path[], unsigned long* samples_num, DecodeFunction decoder)
 {
     /* 1 byte == 1 sample */
     char* audio_bts = read_bts(file_path, samples_num);
 
     if (!audio_bts) return NULL;
 
-    float* audio_res = decode_bts_alaw(audio_bts, *samples_num);
+    float* audio_res = decode_bts(audio_bts, *samples_num, decoder);
 
     free(audio_bts);
 
@@ -62,7 +78,7 @@ char* read_bts(const char file_path[], unsigned long* bts_num)
 }
 
 
-float* decode_bts_alaw(const char bts[], unsigned long bts_num)
+float* decode_bts(const char bts[], unsigned long bts_num, DecodeFunction decoder)
 {
     float* audio_res = malloc(sizeof(float) * bts_num);
     
@@ -71,7 +87,7 @@ float* decode_bts_alaw(const char bts[], unsigned long bts_num)
         return NULL;
     }
     
-    bool status_ok = g711_alaw_decode(bts_num, bts, audio_res);
+    bool status_ok = decoder(bts_num, bts, audio_res);
     
     if (!status_ok) {
         free(audio_res);
