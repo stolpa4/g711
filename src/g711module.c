@@ -70,8 +70,8 @@ PyArrayObject* c_to_numpy_arr(float* arr, unsigned long arr_len)
 
 
 static PyMethodDef g711Methods[] = {
-    {"alaw_load", g711_py_alaw_load, METH_VARARGS, "Load and decode the specified A-Law encoded audio file."},
-    {"ulaw_load", g711_py_ulaw_load, METH_VARARGS, "Load and decode the specified u-Law encoded audio file."},
+    {"load_alaw", g711_py_alaw_load, METH_VARARGS, "Load and decode the specified A-Law encoded audio file."},
+    {"load_ulaw", g711_py_ulaw_load, METH_VARARGS, "Load and decode the specified u-Law encoded audio file."},
     {NULL, NULL, 0, NULL}
 };
 

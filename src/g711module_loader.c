@@ -11,7 +11,7 @@
 #include "g711/utils.h"
 
 
-typedef float* (*DecodeFunction)(unsigned long, const char*, float*);
+typedef bool (*DecodeFunction)(unsigned long, const char*, float*);
 
 
 static inline float* load(const char file_path[], unsigned long* samples_num, DecodeFunction decoder);
