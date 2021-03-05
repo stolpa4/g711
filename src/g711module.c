@@ -214,7 +214,7 @@ PyObject* parse_array(PyObject* args, PyObject *kwargs)
 {
     PyObject* arr_obj = {0};
 
-    static char *kwlist[] = {"audio_arr", NULL};
+    static char *kwlist[] = {"audio_data", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &arr_obj)) return NULL;
     return PyArray_FROM_OTF(arr_obj, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
@@ -230,10 +230,10 @@ static PyMethodDef g711Methods[] = {
                                                                                  "audio data can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
     {"decode_alaw", (PyCFunction) g711_py_alaw_decode, METH_VARARGS | METH_KEYWORDS, "decode_alaw(encoded_bts) -> numpy.ndarray(dtype=numpy.float32)\n\nDecode the specified A-Law encoded bytes object."},
     {"decode_ulaw", (PyCFunction) g711_py_ulaw_decode, METH_VARARGS | METH_KEYWORDS, "decode_ulaw(encoded_bts) -> numpy.ndarray(dtype=numpy.float32)\n\nDecode the specified u-Law encoded bytes object."},
-    {"encode_alaw", (PyCFunction) g711_py_alaw_encode, METH_VARARGS | METH_KEYWORDS, "encode_alaw(audio_arr) -> bytes\n\nEncode the specified audio array to bytes."
-                                                                                     "audio arr can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
-    {"encode_ulaw", (PyCFunction) g711_py_ulaw_encode, METH_VARARGS | METH_KEYWORDS, "encode_ulaw(audio_arr) -> bytes\n\nEncode the specified audio array to bytes."
-                                                                                     "audio arr can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
+    {"encode_alaw", (PyCFunction) g711_py_alaw_encode, METH_VARARGS | METH_KEYWORDS, "encode_alaw(audio_data) -> bytes\n\nEncode the specified audio array to bytes."
+                                                                                     "audio_data can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
+    {"encode_ulaw", (PyCFunction) g711_py_ulaw_encode, METH_VARARGS | METH_KEYWORDS, "encode_ulaw(audio_data) -> bytes\n\nEncode the specified audio array to bytes."
+                                                                                     "audio_data can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
     {NULL, NULL, 0, NULL}
 };
 
