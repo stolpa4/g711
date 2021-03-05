@@ -222,14 +222,18 @@ PyObject* parse_array(PyObject* args, PyObject *kwargs)
 
 
 static PyMethodDef g711Methods[] = {
-    {"load_alaw", (PyCFunction) g711_py_alaw_load, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified A-Law encoded audio file."},
-    {"load_ulaw", (PyCFunction) g711_py_ulaw_load, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified u-Law encoded audio file."},
-    {"save_alaw", (PyCFunction) g711_py_alaw_save, METH_VARARGS | METH_KEYWORDS, "Encode to A-Law and save the specified audio array."},
-    {"save_ulaw", (PyCFunction) g711_py_ulaw_save, METH_VARARGS | METH_KEYWORDS, "Encode to u-Law and save the specified audio array."},
-    {"decode_alaw", (PyCFunction) g711_py_alaw_decode, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified A-Law encoded audio file."},
-    {"decode_ulaw", (PyCFunction) g711_py_ulaw_decode, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified u-Law encoded audio file."},
-    {"encode_alaw", (PyCFunction) g711_py_alaw_encode, METH_VARARGS | METH_KEYWORDS, "Encode to A-Law and save the specified audio array."},
-    {"encode_ulaw", (PyCFunction) g711_py_ulaw_encode, METH_VARARGS | METH_KEYWORDS, "Encode to u-Law and save the specified audio array."},
+    {"load_alaw", (PyCFunction) g711_py_alaw_load, METH_VARARGS | METH_KEYWORDS, "load_alaw(path) -> numpy.ndarray(dtype=numpy.float32)\n\nLoad and decode the specified A-Law encoded audio file."},
+    {"load_ulaw", (PyCFunction) g711_py_ulaw_load, METH_VARARGS | METH_KEYWORDS, "load_ulaw(path) -> numpy.ndarray(dtype=numpy.float32)\n\nLoad and decode the specified u-Law encoded audio file."},
+    {"save_alaw", (PyCFunction) g711_py_alaw_save, METH_VARARGS | METH_KEYWORDS, "save_alaw(path, audio_data) -> bool\n\nEncode to A-Law and save the specified audio array. "
+                                                                                 "audio data can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
+    {"save_ulaw", (PyCFunction) g711_py_ulaw_save, METH_VARARGS | METH_KEYWORDS, "save_ulaw(path, audio_data) -> bool\n\nEncode to u-Law and save the specified audio array."
+                                                                                 "audio data can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
+    {"decode_alaw", (PyCFunction) g711_py_alaw_decode, METH_VARARGS | METH_KEYWORDS, "decode_alaw(encoded_bts) -> numpy.ndarray(dtype=numpy.float32)\n\nDecode the specified A-Law encoded bytes object."},
+    {"decode_ulaw", (PyCFunction) g711_py_ulaw_decode, METH_VARARGS | METH_KEYWORDS, "decode_ulaw(encoded_bts) -> numpy.ndarray(dtype=numpy.float32)\n\nDecode the specified u-Law encoded bytes object."},
+    {"encode_alaw", (PyCFunction) g711_py_alaw_encode, METH_VARARGS | METH_KEYWORDS, "encode_alaw(audio_arr) -> bytes\n\nEncode the specified audio array to bytes."
+                                                                                     "audio arr can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
+    {"encode_ulaw", (PyCFunction) g711_py_ulaw_encode, METH_VARARGS | METH_KEYWORDS, "encode_ulaw(audio_arr) -> bytes\n\nEncode the specified audio array to bytes."
+                                                                                     "audio arr can be anything convertible to numpy.ndarray(dtype=numpy.float32)"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -237,7 +241,7 @@ static PyMethodDef g711Methods[] = {
 static struct PyModuleDef g711module = {
     PyModuleDef_HEAD_INIT,
     "g711",
-    "A small library load and save A-Law encoded audio files.",
+    "A small library for A-Law and u-Law audio coding.",
     -1,
     g711Methods
 };
