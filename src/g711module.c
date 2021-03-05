@@ -1,3 +1,5 @@
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -8,6 +10,8 @@
 #include "g711module_loader.h"
 #include "g711module_saver.h"
 
+#include "g711module_coder.h"
+
 
 typedef float* (*LoadFunction)(const char*, unsigned long*);
 typedef bool (*SaveFunction)(const char*, const float*, unsigned long);
@@ -15,11 +19,16 @@ typedef bool (*SaveFunction)(const char*, const float*, unsigned long);
 
 static inline PyObject* g711_py_load(PyObject* self, PyObject* args, PyObject *kwargs, LoadFunction load_fn);
 static inline const char* parse_path(PyObject* args, PyObject *kwargs);
-static inline PyArrayObject* c_to_numpy_arr(float* arr, unsigned long arr_len);
+static inline PyObject* c_to_numpy_arr(float* arr, unsigned long arr_len);
 
 static inline PyObject* g711_py_save(PyObject* self, PyObject* args, PyObject *kwargs, SaveFunction save_fn);
 static inline const char* parse_path_and_array(PyObject* args, PyObject *kwargs, PyObject** arr);
 
+static inline PyObject* g711_py_decode(PyObject* self, PyObject* args, PyObject *kwargs, DecodeFunction decode_fn);
+static inline const char* parse_bytes(PyObject* args, PyObject *kwargs, unsigned long* bytes_number);
+
+static inline PyObject* g711_py_encode(PyObject* self, PyObject* args, PyObject *kwargs, EncodeFunction encode_fn);
+static inline PyObject* parse_array(PyObject* args, PyObject *kwargs);
 
 static PyObject*
 g711_py_alaw_load(PyObject* self, PyObject* args, PyObject *kwargs)
@@ -39,7 +48,7 @@ PyObject*
 g711_py_load(PyObject* self, PyObject* args, PyObject *kwargs, LoadFunction load_fn)
 {
     const char* path = parse_path(args, kwargs);
-    if (!path) return path;
+    if (!path) return NULL;
 
     unsigned long samples_num = {0};
     float* audio_res = load_fn(path, &samples_num);
@@ -66,11 +75,11 @@ const char* parse_path(PyObject* args, PyObject *kwargs)
 }
 
 
-PyArrayObject* c_to_numpy_arr(float* arr, unsigned long arr_len)
+PyObject* c_to_numpy_arr(float* arr, unsigned long arr_len)
 {
     npy_intp dims = (npy_intp) arr_len;
-    PyArrayObject* res = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, arr);
-    PyArray_ENABLEFLAGS(res, NPY_OWNDATA);
+    PyObject* res = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT32, arr);
+    PyArray_ENABLEFLAGS((PyArrayObject*)res, NPY_ARRAY_OWNDATA);
 
     return res;
 }
@@ -96,8 +105,8 @@ PyObject* g711_py_save(PyObject* self, PyObject* args, PyObject *kwargs, SaveFun
     const char* path = parse_path_and_array(args, kwargs, &arr);
     if (!path || !arr) return NULL;
 
-    float* arr_data = PyArray_DATA(arr);
-    unsigned long arr_len = PyArray_SIZE(arr);
+    float* arr_data = PyArray_DATA((PyArrayObject *)arr);
+    unsigned long arr_len = PyArray_SIZE((PyArrayObject *)arr);
 
     bool status_ok = save_fn(path, arr_data, arr_len);
     Py_DECREF(arr);
@@ -120,17 +129,107 @@ const char* parse_path_and_array(PyObject* args, PyObject *kwargs, PyObject** ar
         return NULL;
     }
 
-    *arr = PyArray_FROM_OTF(arr_obj, NPY_FLOAT32, NPY_IN_ARRAY);
+    *arr = PyArray_FROM_OTF(arr_obj, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
 
     return PyBytes_AsString(path_obj);
 }
 
 
+static PyObject*
+g711_py_alaw_decode(PyObject* self, PyObject* args, PyObject *kwargs)
+{
+    return g711_py_decode(self, args, kwargs, g711_alaw_decode);
+}
+
+
+static PyObject*
+g711_py_ulaw_decode(PyObject* self, PyObject* args, PyObject *kwargs)
+{
+    return g711_py_decode(self, args, kwargs, g711_ulaw_decode);
+}
+
+
+PyObject* g711_py_decode(PyObject* self, PyObject* args, PyObject *kwargs, DecodeFunction decode_fn)
+{
+    unsigned long bts_num = {0};
+    const char* bts = parse_bytes(args, kwargs, &bts_num);
+    if (!bts) return NULL;
+
+    float* audio_res = g711_decode(bts, bts_num, decode_fn);
+    if(!audio_res) return NULL;
+
+    return c_to_numpy_arr(audio_res, bts_num);
+}
+
+
+const char* parse_bytes(PyObject* args, PyObject *kwargs, unsigned long* bytes_number)
+{
+    static char* kwlist[] = {"encoded_bts", NULL};
+    const char* bts = {0};
+    Py_ssize_t bts_num = {0};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#", kwlist, &bts, &bts_num)) return NULL;
+
+    *bytes_number = (unsigned long) bts_num;
+
+    return bts;
+}
+
+
+static PyObject*
+g711_py_alaw_encode(PyObject* self, PyObject* args, PyObject *kwargs)
+{
+    return g711_py_encode(self, args, kwargs, g711_alaw_encode);
+}
+
+
+static PyObject*
+g711_py_ulaw_encode(PyObject* self, PyObject* args, PyObject *kwargs)
+{
+    return g711_py_encode(self, args, kwargs, g711_ulaw_encode);
+}
+
+
+PyObject* g711_py_encode(PyObject* self, PyObject* args, PyObject *kwargs, EncodeFunction encode_fn)
+{
+    PyObject* arr = parse_array(args, kwargs);
+    if (!arr) return NULL;
+
+    float* arr_data = PyArray_DATA((PyArrayObject *)arr);
+    unsigned long arr_len = PyArray_SIZE((PyArrayObject *)arr);
+
+    char* bts = g711_encode(arr_data, arr_len, encode_fn);
+    Py_DECREF(arr);
+
+    if (!bts) return NULL;
+
+    PyObject* res = Py_BuildValue("y#", bts, arr_len);
+
+    free(bts);
+
+    return res;
+}
+
+
+PyObject* parse_array(PyObject* args, PyObject *kwargs)
+{
+    PyObject* arr_obj = {0};
+
+    static char *kwlist[] = {"audio_arr", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O", kwlist, &arr_obj)) return NULL;
+    return PyArray_FROM_OTF(arr_obj, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
+}
+
+
 static PyMethodDef g711Methods[] = {
-    {"load_alaw", g711_py_alaw_load, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified A-Law encoded audio file."},
-    {"load_ulaw", g711_py_ulaw_load, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified u-Law encoded audio file."},
-    {"save_alaw", g711_py_alaw_save, METH_VARARGS | METH_KEYWORDS, "Encode to A-Law and save the specified audio array."},
-    {"save_ulaw", g711_py_ulaw_save, METH_VARARGS | METH_KEYWORDS, "Encode to u-Law and save the specified audio array."},
+    {"load_alaw", (PyCFunction) g711_py_alaw_load, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified A-Law encoded audio file."},
+    {"load_ulaw", (PyCFunction) g711_py_ulaw_load, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified u-Law encoded audio file."},
+    {"save_alaw", (PyCFunction) g711_py_alaw_save, METH_VARARGS | METH_KEYWORDS, "Encode to A-Law and save the specified audio array."},
+    {"save_ulaw", (PyCFunction) g711_py_ulaw_save, METH_VARARGS | METH_KEYWORDS, "Encode to u-Law and save the specified audio array."},
+    {"decode_alaw", (PyCFunction) g711_py_alaw_decode, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified A-Law encoded audio file."},
+    {"decode_ulaw", (PyCFunction) g711_py_ulaw_decode, METH_VARARGS | METH_KEYWORDS, "Load and decode the specified u-Law encoded audio file."},
+    {"encode_alaw", (PyCFunction) g711_py_alaw_encode, METH_VARARGS | METH_KEYWORDS, "Encode to A-Law and save the specified audio array."},
+    {"encode_ulaw", (PyCFunction) g711_py_ulaw_encode, METH_VARARGS | METH_KEYWORDS, "Encode to u-Law and save the specified audio array."},
     {NULL, NULL, 0, NULL}
 };
 

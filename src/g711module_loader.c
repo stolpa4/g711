@@ -7,16 +7,12 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "g711/decoder.h"
 #include "g711/utils.h"
-
-
-typedef bool (*DecodeFunction)(unsigned long, const char*, float*);
+#include "g711module_coder.h"
 
 
 static inline float* load(const char file_path[], unsigned long* samples_num, DecodeFunction decoder);
 static inline char* read_bts(const char file_path[], unsigned long* bts_num);
-static inline float* decode_bts(const char bts[], unsigned long bts_num, DecodeFunction decoder);
 
 
 float* g711_alaw_load(const char file_path[], unsigned long* samples_num)
@@ -38,7 +34,7 @@ float* load(const char file_path[], unsigned long* samples_num, DecodeFunction d
 
     if (!audio_bts) return NULL;
 
-    float* audio_res = decode_bts(audio_bts, *samples_num, decoder);
+    float* audio_res = g711_decode(audio_bts, *samples_num, decoder);
 
     free(audio_bts);
 
@@ -66,7 +62,7 @@ char* read_bts(const char file_path[], unsigned long* bts_num)
     }
 
     char* bts = g711_read_file(file, *bts_num);
-    
+
     if (!bts) {
         PyErr_Format(PyExc_IOError, "Error reading the file: %s.", file_path);
         return NULL;
@@ -75,25 +71,4 @@ char* read_bts(const char file_path[], unsigned long* bts_num)
     g711_close_file(file);
 
     return bts;
-}
-
-
-float* decode_bts(const char bts[], unsigned long bts_num, DecodeFunction decoder)
-{
-    float* audio_res = malloc(sizeof(float) * bts_num);
-    
-    if (!audio_res) {
-        PyErr_SetNone(PyExc_MemoryError);
-        return NULL;
-    }
-    
-    bool status_ok = decoder(bts_num, bts, audio_res);
-    
-    if (!status_ok) {
-        free(audio_res);
-        PyErr_SetNone(PyExc_MemoryError);
-        return NULL;   
-    }
-
-    return audio_res;
 }

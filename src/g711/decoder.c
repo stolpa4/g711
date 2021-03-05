@@ -37,5 +37,5 @@ bool decode(unsigned long num_samples, const char in_buf[], float out_buf[], Exp
 
     free(tmp_buf);
 
-    return true;   
+    return true;
 }
