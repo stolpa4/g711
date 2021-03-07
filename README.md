@@ -6,6 +6,7 @@ The library is written as an extension for python3 and allows to work simply wit
 # Requirements
 1. Python 3.5+
 2. Numpy (will be installed anyway before the building procedure)
+3. Tools for building C/C++ applications (GCC/Clang/VS build tools)
 
 # Implementation details
 The library is written in pure C and relies exclusively on a python build system. I tried to minimize the use of any platform-dependend functions to provide a truly cross-platform and fast library.
