@@ -4,7 +4,7 @@ G711 A-Law / u-Law audio-coding library
 The library is written as an extension for python3 and allows to work simply with G711 encoded audio.
 
 # Requirements
-1. Python 3.5+
+1. Python 3.6+
 2. Numpy (will be installed anyway before the building procedure)
 3. Tools for building C/C++ applications (GCC/Clang/VS build tools)
 
