@@ -5,7 +5,9 @@ import numpy as np
 
 
 def main(extension):
-    setup(ext_modules=[extension])
+    setup(ext_modules=[extension],
+          install_requires=['numpy>=1.20.1'],
+          python_requires='>=3.6')
 
 
 if __name__ == "__main__":
